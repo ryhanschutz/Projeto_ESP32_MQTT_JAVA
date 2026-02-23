@@ -27,26 +27,38 @@
 
 ```mermaid
 flowchart LR
-    subgraph ESP32["🔧 ESP32 · Wokwi"]
-        DHT["DHT22\nTemperatura"]
-        POT["Potenciômetro\nPressão"]
-        LEDS["LEDs + LCD I2C"]
+    subgraph ESP32 ["Nó 1: ESP32 (Wokwi Simulation)"]
+        direction TB
+        SENS["Sensores (DHT22 & Potenciômetro)"]
+        CTRL["Firmware C++ (Controle)"]
+        ACT["Atuadores (LEDs & LCD I2C)"]
+        
+        SENS -- "Leitura Analógica/Digital" --> CTRL
+        CTRL -- "Atualiza Estado" --> ACT
     end
 
-    subgraph BROKER["☁️ Broker HiveMQ"]
-        T1["senai/prensa/telemetria"]
-        T2["senai/prensa/comando"]
+    subgraph BROKER ["☁️ MQTT Broker (HiveMQ)"]
+        direction TB
+        T1["Tópico: senai/prensa/telemetria"]
+        T2["Tópico: senai/prensa/comando"]
     end
 
-    subgraph JAVA["☕ Backend Java · Codespaces"]
-        PROC["Lógica de\nSegurança"]
+    subgraph JAVA ["Nó 2: Backend Java (Codespaces)"]
+        LOGIC["Lógica de Segurança (Maven/Paho)"]
     end
 
-    DHT & POT --> |leitura| ESP32
-    ESP32 -->|PUBLICA JSON| T1
-    T1 -->|ASSINA| PROC
-    PROC -->|PUBLICA comando| T2
-    T2 -->|ASSINA| LEDS
+    %% Fluxo de Dados
+    CTRL -- "PUBLISH (JSON)" --> T1
+    T1 -- "SUBSCRIBE" --> LOGIC
+    LOGIC -- "PUBLISH (Status)" --> T2
+    T2 -- "SUBSCRIBE" --> CTRL
+
+    %% Estilização
+    style ESP32 fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style JAVA fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style BROKER fill:#e1f5fe,stroke:#01579b,stroke-dasharray: 5 5
+    style T1 fill:#fff,stroke:#333
+    style T2 fill:#fff,stroke:#333
 ```
 
 ---
